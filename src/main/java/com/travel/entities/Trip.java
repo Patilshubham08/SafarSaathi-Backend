@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.print.attribute.standard.Destination;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -62,7 +61,7 @@ public class Trip {
 
     @ManyToOne
     @JoinColumn(name = "package_id", nullable = true)
-    private Package selectedPackage;
+    private Packages selectedPackage;
     
     
  // Booking is vital. If Trip is deleted, Booking should be deleted (or archived).
@@ -77,7 +76,7 @@ public class Trip {
     private List<Accommodation> accommodations = new ArrayList<>();
 
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Destination> destinations = new ArrayList<>();
+    private List<Destinations> destinations = new ArrayList<>();
     
     
     

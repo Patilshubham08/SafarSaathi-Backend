@@ -48,7 +48,7 @@ public class User {
 	 
 	// SAFETY ON: Prevents deleting a Vendor if they have active Packages
 	    @OneToMany(mappedBy = "vendor", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-	    private List<Package> packages = new ArrayList<>();
+	    private List<Packages> packages = new ArrayList<>();
 
 	    // SAFETY ON: Prevents deleting a Customer if they have active Trips
 	    @OneToMany(mappedBy = "customer", cascade = {CascadeType.PERSIST, CascadeType.MERGE})

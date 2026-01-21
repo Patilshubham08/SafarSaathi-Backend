@@ -8,6 +8,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -35,7 +37,11 @@ public class Transportation {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	
 	private Long transId;
-    private Long tripId;
+    //private Long tripId;
+	
+	@ManyToOne
+    @JoinColumn(name = "trip_id")
+    private Trip trip;
     
     private String transportName;
     
@@ -43,7 +49,7 @@ public class Transportation {
     private LocalDateTime departureTime;
     
     @Enumerated(EnumType.STRING)
-    private TransportType transport_Type;
+    private TransportType transportType;
 	
 	
 	
