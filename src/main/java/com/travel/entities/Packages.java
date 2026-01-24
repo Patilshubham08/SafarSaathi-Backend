@@ -3,6 +3,8 @@ package com.travel.entities;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore; // 1. IMPORT THIS
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,17 +20,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-
 @Entity
 @Table(name="packages")
 @RequiredArgsConstructor
 @Getter
 @Setter
 @ToString
-
-
-
-//Packages: pkg_id, name, price, vendor_id, image_url
 public class Packages {
 	
 	@Id
@@ -37,20 +34,18 @@ public class Packages {
 	private String packageName;
 	private Double price;
 	private String description;
-	//private Long vendorId;
-	 
+	
 	@Column(name = "image_url")
     private String imageUrl;
 	
 	@ManyToOne
     @JoinColumn(name = "vendor_id")
+    @JsonIgnore // (Optional but Recommended) Prevents loops back to Vendor
     private User vendor;
 
-    // SAFETY: If a package is deleted, we don't necessarily want to delete the user's trip history.
-    // So we use PERSIST + MERGE here too.
+    // 👇 THIS IS THE FIX 👇
     @OneToMany(mappedBy = "selectedPackage", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JsonIgnore // <--- ADD THIS to stop the "LazyInitializationException"
     private List<Trip> trips = new ArrayList<>();
-	
-
 
 }

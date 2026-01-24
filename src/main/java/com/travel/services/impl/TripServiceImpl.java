@@ -1,4 +1,4 @@
-package com.travel.services;
+package com.travel.services.impl;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,6 +17,7 @@ import com.travel.repositories.DestinationsRepository;
 import com.travel.repositories.PackagesRepository;
 import com.travel.repositories.TripRepository;
 import com.travel.repositories.UserRepository;
+import com.travel.services.TripService;
 
 @Service
 public class TripServiceImpl implements TripService {
@@ -104,5 +105,35 @@ public class TripServiceImpl implements TripService {
         dest.setTrip(trip);
         
         destRepo.save(dest);
+    }
+
+    @Override
+    public TripDto updateTrip(Long tripId, TripDto tripDto) {
+        // 1. Find the existing trip
+        Trip trip = tripRepo.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Trip not found with ID: " + tripId));
+
+        // 2. Partial Update: Only update fields that the user actually sent
+        if (tripDto.getTripName() != null) {
+            trip.setTripName(tripDto.getTripName());
+        }
+        if (tripDto.getStartDate() != null) {
+            trip.setStartDate(tripDto.getStartDate());
+        }
+        if (tripDto.getEndDate() != null) {
+            trip.setEndDate(tripDto.getEndDate());
+        }
+        if (tripDto.getBudget() != null) {
+            trip.setBudget(tripDto.getBudget());
+        }
+        if (tripDto.getTripStatus() != null) {
+            trip.setTripStatus(tripDto.getTripStatus());
+        }
+
+        // 3. Save the changes to the database
+        Trip updatedTrip = tripRepo.save(trip);
+
+        // 4. Convert back to DTO and return
+        return mapToDto(updatedTrip);
     }
 }

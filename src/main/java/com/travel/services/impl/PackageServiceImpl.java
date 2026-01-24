@@ -1,4 +1,4 @@
-package com.travel.services;
+package com.travel.services.impl;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -10,6 +10,7 @@ import com.travel.entities.Packages;
 import com.travel.entities.User;
 import com.travel.repositories.PackagesRepository;
 import com.travel.repositories.UserRepository;
+import com.travel.services.PackageService;
 
 @Service
 public class PackageServiceImpl implements PackageService {

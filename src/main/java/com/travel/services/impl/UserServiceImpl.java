@@ -1,10 +1,11 @@
-package com.travel.services;
+package com.travel.services.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.travel.entities.User;
 import com.travel.repositories.UserRepository;
+import com.travel.services.UserService;
 
 @Service
 public class UserServiceImpl implements UserService {

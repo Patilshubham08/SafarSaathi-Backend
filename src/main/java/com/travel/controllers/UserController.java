@@ -5,11 +5,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.travel.entities.User;
+import com.travel.dtos.LoginDto; // 1. Import your DTO
 import com.travel.services.UserService;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "http://localhost:3000") // Allow React Frontend to connect later
+@CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
 
     @Autowired
@@ -26,10 +27,11 @@ public class UserController {
         }
     }
 
-    // Login (Simple version using User object for email/password)
+    // Login (Updated to use LoginDto)
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User loginDetails) {
+    public ResponseEntity<?> login(@RequestBody LoginDto loginDetails) { // 2. Use LoginDto here
         try {
+            // 3. Extract email/pass from the DTO
             User user = userService.loginUser(loginDetails.getEmail(), loginDetails.getPassword());
             return ResponseEntity.ok(user);
         } catch (RuntimeException e) {

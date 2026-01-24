@@ -3,6 +3,7 @@ package com.travel.entities;
 import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore; // Import this
 
 @Entity
 @Table(name="accommodation")
@@ -16,9 +17,9 @@ public class Accommodation {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long accomId;
 	
-    // FIX: Link back to Trip
     @ManyToOne
     @JoinColumn(name = "trip_id")
+    @JsonIgnore // <--- ADD THIS to prevent crash
     private Trip trip;
 	
 	private String hotelName;

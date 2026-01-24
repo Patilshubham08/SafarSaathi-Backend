@@ -10,4 +10,6 @@ public interface TripService {
     List<TripDto> getTripsByCustomer(Long customerId);
     TripDto getTripById(Long tripId);
     void addDestination(Long tripId, DestinationDto destDto);
+ // Add this new method
+    TripDto updateTrip(Long tripId, TripDto tripDto);
 }

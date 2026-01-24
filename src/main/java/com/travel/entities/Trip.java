@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+// 1. IMPORT THIS
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -29,21 +31,11 @@ import lombok.ToString;
 @Setter
 @ToString
 @RequiredArgsConstructor
-
-
-
-//Trips: trip_id, customer_id, package_id, name, status.
-
 public class Trip {
-	
 	
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Long tripId;
-	
-//	private Long customerId;
-//	private Long packageId;
-	
 	
 	private String tripName;
 	private LocalDate startDate;
@@ -54,7 +46,6 @@ public class Trip {
 	@Column(nullable = false)
 	private TripStatus tripStatus;
 	
-	
 	@ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
     private User customer;
@@ -63,25 +54,23 @@ public class Trip {
     @JoinColumn(name = "package_id", nullable = true)
     private Packages selectedPackage;
     
-    
- // Booking is vital. If Trip is deleted, Booking should be deleted (or archived).
+    // 👇 SAFETY FIX 1: Add @JsonIgnore
     @OneToOne(mappedBy = "trip", cascade = CascadeType.ALL)
+    @JsonIgnore
     private Bookings booking;
 
-    // CLEANUP ON: Deleting a Trip automatically deletes its flights/hotels
+    // 👇 SAFETY FIX 2: Add @JsonIgnore
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Transportation> transportations = new ArrayList<>();
 
+    // 👇 SAFETY FIX 3: Add @JsonIgnore
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Accommodation> accommodations = new ArrayList<>();
 
+    // 👇 SAFETY FIX 4: Add @JsonIgnore
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Destinations> destinations = new ArrayList<>();
-    
-    
-    
-    
-    
-	
-
 }

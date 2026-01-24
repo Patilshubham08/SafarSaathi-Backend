@@ -2,6 +2,7 @@ package com.travel.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore; // ⚠️ IMPORT THIS
 
 @Entity
 @Table(name="destination")
@@ -15,9 +16,10 @@ public class Destinations {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long destId;
 	
-    // FIX: Link back to Trip
+    // FIX: Link back to Trip + STOP INFINITE LOOP
     @ManyToOne
     @JoinColumn(name = "trip_id")
+    @JsonIgnore // <--- ADD THIS
     private Trip trip;
 	
 	private String destinationName;

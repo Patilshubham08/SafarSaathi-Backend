@@ -3,6 +3,8 @@ package com.travel.entities;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore; // 1. IMPORT THIS
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,49 +16,44 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.NoArgsConstructor; // Un-commented this (Required for JPA)
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
 @Entity
 @Table(name="user")
-//@NoArgsConstructor
-@RequiredArgsConstructor
+@NoArgsConstructor // 2. JPA needs this! Please uncomment it.
 @Getter
 @Setter
 @ToString
-
-//Users: user_id, name, email, role, password. 
 public class User {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long userId;
 	
-	
 	@Column(nullable = false)
-	 private String name;
+	private String name;
 	
 	@Column(nullable = false, unique = true)
-	 private String email;
-	 
+	private String email;
+	
 	@Column(nullable = false)
-	 private String password;
-	 
-	 @Enumerated(EnumType.STRING)
-	 private UserRole userRole;
-	 
-	// SAFETY ON: Prevents deleting a Vendor if they have active Packages
-	    @OneToMany(mappedBy = "vendor", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-	    private List<Packages> packages = new ArrayList<>();
+	private String password;
+	
+	@Enumerated(EnumType.STRING)
+	private UserRole userRole;
+	
+    // 3. ADD @JsonIgnore HERE
+    // SAFETY ON: Prevents deleting a Vendor if they have active Packages
+    @OneToMany(mappedBy = "vendor", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JsonIgnore 
+    private List<Packages> packages = new ArrayList<>();
 
-	    // SAFETY ON: Prevents deleting a Customer if they have active Trips
-	    @OneToMany(mappedBy = "customer", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-	    private List<Trip> trips = new ArrayList<>();
-	 
-	 
-	 
-	 
-    
-	 
+    // 4. ADD @JsonIgnore HERE
+    // SAFETY ON: Prevents deleting a Customer if they have active Trips
+    @OneToMany(mappedBy = "customer", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JsonIgnore 
+    private List<Trip> trips = new ArrayList<>();
 }
