@@ -12,4 +12,7 @@ public interface TripService {
     void addDestination(Long tripId, DestinationDto destDto);
  // Add this new method
     TripDto updateTrip(Long tripId, TripDto tripDto);
+    
+ // Add this to the interface
+    void deleteTrip(Long tripId);
 }

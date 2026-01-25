@@ -136,4 +136,14 @@ public class TripServiceImpl implements TripService {
         // 4. Convert back to DTO and return
         return mapToDto(updatedTrip);
     }
+
+    @Override
+    public void deleteTrip(Long tripId) {
+        // 1. Check if it exists
+        Trip trip = tripRepo.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Trip not found with ID: " + tripId));
+        
+        // 2. Delete it
+        tripRepo.delete(trip);
+    }
 }

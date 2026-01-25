@@ -69,4 +69,15 @@ public class TripController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    
+ // 👇 ADD THIS DELETE METHOD 👇
+    @DeleteMapping("/{tripId}")
+    public ResponseEntity<?> deleteTrip(@PathVariable Long tripId) {
+        try {
+            tripService.deleteTrip(tripId);
+            return ResponseEntity.ok("Trip deleted successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }
