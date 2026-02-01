@@ -5,6 +5,6 @@ import com.travel.entities.Trip;
 import java.util.List;
 
 public interface TripRepository extends JpaRepository<Trip, Long> {
-    // Used by TripService to show a customer their history
-    List<Trip> findByCustomer_UserId(Long userId);
+    // Matches Trip entity field "customer" -> User entity field "userId"
+    List<Trip> findByCustomerUserId(Long userId);
 }

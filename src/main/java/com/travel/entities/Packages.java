@@ -2,19 +2,8 @@ package com.travel.entities;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonIgnore; // 1. IMPORT THIS
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -25,27 +14,33 @@ import lombok.ToString;
 @RequiredArgsConstructor
 @Getter
 @Setter
-@ToString
+@ToString(exclude = "trips") // Good practice to exclude lists from ToString to avoid recursion
 public class Packages {
 	
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Long packageId;
+	
 	private String packageName;
 	private Double price;
+	
+	@Column(length = 2000)
 	private String description;
 	
-	@Column(name = "image_url")
+	@Column(name = "image_url", length = 2000)
     private String imageUrl;
 	
 	@ManyToOne
     @JoinColumn(name = "vendor_id")
-    @JsonIgnore // (Optional but Recommended) Prevents loops back to Vendor
+    @JsonIgnore 
     private User vendor;
 
-    // 👇 THIS IS THE FIX 👇
-    @OneToMany(mappedBy = "selectedPackage", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JsonIgnore // <--- ADD THIS to stop the "LazyInitializationException"
+    // --- UPDATED RELATIONSHIP ---
+    @OneToMany(
+        mappedBy = "selectedPackage", 
+        cascade = CascadeType.ALL, // 👈 Fixes the MySQL Error 1451
+        orphanRemoval = true       // 👈 Cleans up trips that no longer have a package
+    )
+    @JsonIgnore 
     private List<Trip> trips = new ArrayList<>();
-
 }

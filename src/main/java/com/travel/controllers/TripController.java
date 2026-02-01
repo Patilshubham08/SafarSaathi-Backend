@@ -1,83 +1,49 @@
 package com.travel.controllers;
 
-import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import com.travel.dtos.DestinationDto;
-import com.travel.dtos.TripDto; 
+import com.travel.dtos.TripDto;
 import com.travel.entities.Trip;
 import com.travel.services.TripService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/trips")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://localhost:5173")
 public class TripController {
 
     @Autowired
     private TripService tripService;
 
-    // 1. Create Trip
+    // ✅ FIXED: Matches axios.post(`.../api/trips/${user.userId}?packageId=${pkg.packageId}`)
     @PostMapping("/{customerId}")
     public ResponseEntity<?> createTrip(
-            @RequestBody Trip trip, 
-            @PathVariable Long customerId,
-            @RequestParam(required = false) Long packageId) {
+            @PathVariable Long customerId, 
+            @RequestParam(required = false) Long packageId,
+            @RequestBody Trip trip) {
         try {
-            TripDto newTrip = tripService.createTrip(trip, customerId, packageId);
-            return ResponseEntity.ok(newTrip);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-    
-    // 2. Add Destination
-    @PostMapping("/{tripId}/destinations")
-    public ResponseEntity<?> addDestination(@PathVariable Long tripId, @RequestBody DestinationDto destDto) {
-        try {
-            tripService.addDestination(tripId, destDto);
-            return ResponseEntity.ok("Destination added successfully!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            TripDto createdTrip = tripService.createTrip(trip, customerId, packageId);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdTrip);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
-    // 3. Get All Trips for Customer
-    @GetMapping("/{customerId}")
-    public List<TripDto> getUserTrips(@PathVariable Long customerId) {
-        return tripService.getTripsByCustomer(customerId);
-    }
-    
-    // 4. Get Single Trip Details
-    @GetMapping("/details/{tripId}")
-    public ResponseEntity<?> getTripDetails(@PathVariable Long tripId) {
-        try {
-            return ResponseEntity.ok(tripService.getTripById(tripId));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+    // ✅ FIXED: Matches axios.get(`.../api/trips/customer/${user.userId}`)
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<List<TripDto>> getTripsByCustomer(@PathVariable Long customerId) {
+        return ResponseEntity.ok(tripService.getTripsByCustomer(customerId));
     }
 
-    // 👇 5. UPDATE TRIP (Added this new method) 👇
-    @PutMapping("/{tripId}")
-    public ResponseEntity<?> updateTrip(@PathVariable Long tripId, @RequestBody TripDto tripDto) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteTrip(@PathVariable Long id) {
         try {
-            TripDto updatedTrip = tripService.updateTrip(tripId, tripDto);
-            return ResponseEntity.ok(updatedTrip);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-    
- // 👇 ADD THIS DELETE METHOD 👇
-    @DeleteMapping("/{tripId}")
-    public ResponseEntity<?> deleteTrip(@PathVariable Long tripId) {
-        try {
-            tripService.deleteTrip(tripId);
-            return ResponseEntity.ok("Trip deleted successfully");
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            tripService.deleteTrip(id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 }

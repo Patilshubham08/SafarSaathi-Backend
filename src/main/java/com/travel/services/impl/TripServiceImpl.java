@@ -1,149 +1,141 @@
 package com.travel.services.impl;
 
+import com.travel.dtos.DestinationDto;
+import com.travel.dtos.TripDto;
+import com.travel.entities.Trip;
+import com.travel.entities.User;
+import com.travel.entities.Packages;
+import com.travel.entities.TripStatus; // Ensure this is imported
+import com.travel.repositories.TripRepository;
+import com.travel.repositories.UserRepository;
+import com.travel.repositories.PackagesRepository;
+import com.travel.services.TripService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import com.travel.dtos.DestinationDto;
-import com.travel.dtos.TripDto;
-import com.travel.entities.Destinations;
-import com.travel.entities.Packages;
-import com.travel.entities.Trip;
-import com.travel.entities.TripStatus;
-import com.travel.entities.User;
-import com.travel.repositories.DestinationsRepository;
-import com.travel.repositories.PackagesRepository;
-import com.travel.repositories.TripRepository;
-import com.travel.repositories.UserRepository;
-import com.travel.services.TripService;
-
 @Service
+@Transactional
 public class TripServiceImpl implements TripService {
 
     @Autowired
-    private TripRepository tripRepo;
-    @Autowired
-    private UserRepository userRepo;
-    @Autowired
-    private PackagesRepository packageRepo;
+    private TripRepository tripRepository;
 
-    // --- 1. Helper Method to Convert Entity -> DTO ---
-    private TripDto mapToDto(Trip trip) {
-        TripDto dto = new TripDto();
-        dto.setTripId(trip.getTripId());
-        dto.setTripName(trip.getTripName());
-        dto.setStartDate(trip.getStartDate());
-        dto.setEndDate(trip.getEndDate());
-        dto.setBudget(trip.getBudget());
-        dto.setTripStatus(trip.getTripStatus());
-        
-        // Handle Customer
-        if (trip.getCustomer() != null) {
-            dto.setCustomerId(trip.getCustomer().getUserId());
-        }
-        
-        // Handle Package (if exists)
-        if (trip.getSelectedPackage() != null) {
-            dto.setPackageName(trip.getSelectedPackage().getPackageName());
-        }
-        return dto;
-    }
+    @Autowired
+    private UserRepository userRepository;
 
-    // --- 2. Create Trip ---
+    @Autowired
+    private PackagesRepository packagesRepository;
+
     @Override
     public TripDto createTrip(Trip trip, Long customerId, Long packageId) {
-        User customer = userRepo.findById(customerId)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
-        trip.setCustomer(customer);
+        // 1. Fetch Customer
+        User user = userRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found with ID: " + customerId));
+        trip.setCustomer(user);
 
+        // 2. Fetch and Link Package
         if (packageId != null) {
-            Packages selectedPackage = packageRepo.findById(packageId)
-                    .orElseThrow(() -> new RuntimeException("Package not found"));
-            trip.setSelectedPackage(selectedPackage);
-            if(trip.getBudget() == null) trip.setBudget(selectedPackage.getPrice());
+            Packages pkg = packagesRepository.findById(packageId)
+                    .orElseThrow(() -> new RuntimeException("Package not found with ID: " + packageId));
+            trip.setSelectedPackage(pkg);
+            
+            // Auto-fill trip info from the selected package if not already set
+            if (trip.getTripName() == null) trip.setTripName(pkg.getPackageName());
+            if (trip.getBudget() == null) trip.setBudget(pkg.getPrice());
         }
 
-        trip.setTripStatus(TripStatus.SCHEDULED);
-        
-        // Save Entity
-        Trip savedTrip = tripRepo.save(trip);
-        
-        // Return DTO
+        // 3. Safety: Default Status if missing
+        if (trip.getTripStatus() == null) {
+            trip.setTripStatus(TripStatus.SCHEDULED);
+        }
+
+        // 4. Basic Date Validation
+        if (trip.getStartDate() != null && trip.getEndDate() != null) {
+            if (trip.getEndDate().isBefore(trip.getStartDate())) {
+                throw new RuntimeException("End date cannot be before start date.");
+            }
+        }
+
+        Trip savedTrip = tripRepository.save(trip);
         return mapToDto(savedTrip);
     }
 
-    // --- 3. Get All Trips (Returns List of DTOs) ---
     @Override
     public List<TripDto> getTripsByCustomer(Long customerId) {
-        List<Trip> trips = tripRepo.findByCustomer_UserId(customerId);
-        // Convert the whole list to DTOs
-        return trips.stream().map(this::mapToDto).collect(Collectors.toList());
+        return tripRepository.findByCustomerUserId(customerId)
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 
-    // --- 4. Get Single Trip ---
     @Override
     public TripDto getTripById(Long tripId) {
-        Trip trip = tripRepo.findById(tripId)
-                .orElseThrow(() -> new RuntimeException("Trip not found"));
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Trip not found with ID: " + tripId));
         return mapToDto(trip);
     }
 
-    @Autowired
-    private DestinationsRepository destRepo; // Short and clean
-
     @Override
-    public void addDestination(Long tripId, DestinationDto destDto) {
-        Trip trip = tripRepo.findById(tripId)
+    public TripDto updateTrip(Long tripId, TripDto dto) {
+        Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
         
-        Destinations dest = new Destinations(); // Clean name
-        dest.setDestinationName(destDto.getDestinationName());
-        dest.setImageUrl(destDto.getImageUrl());
+        trip.setTripName(dto.getTripName());
+        trip.setBudget(dto.getBudget());
+        trip.setTripStatus(dto.getTripStatus());
+        trip.setStartDate(dto.getStartDate());
+        trip.setEndDate(dto.getEndDate());
         
-        dest.setTrip(trip);
-        
-        destRepo.save(dest);
-    }
-
-    @Override
-    public TripDto updateTrip(Long tripId, TripDto tripDto) {
-        // 1. Find the existing trip
-        Trip trip = tripRepo.findById(tripId)
-                .orElseThrow(() -> new RuntimeException("Trip not found with ID: " + tripId));
-
-        // 2. Partial Update: Only update fields that the user actually sent
-        if (tripDto.getTripName() != null) {
-            trip.setTripName(tripDto.getTripName());
-        }
-        if (tripDto.getStartDate() != null) {
-            trip.setStartDate(tripDto.getStartDate());
-        }
-        if (tripDto.getEndDate() != null) {
-            trip.setEndDate(tripDto.getEndDate());
-        }
-        if (tripDto.getBudget() != null) {
-            trip.setBudget(tripDto.getBudget());
-        }
-        if (tripDto.getTripStatus() != null) {
-            trip.setTripStatus(tripDto.getTripStatus());
-        }
-
-        // 3. Save the changes to the database
-        Trip updatedTrip = tripRepo.save(trip);
-
-        // 4. Convert back to DTO and return
-        return mapToDto(updatedTrip);
+        return mapToDto(tripRepository.save(trip));
     }
 
     @Override
     public void deleteTrip(Long tripId) {
-        // 1. Check if it exists
-        Trip trip = tripRepo.findById(tripId)
-                .orElseThrow(() -> new RuntimeException("Trip not found with ID: " + tripId));
+        // 1. Log the incoming ID to identify 'undefined' or 'null' issues from frontend
+        System.out.println("DEBUG: Attempting to delete Trip with ID: " + tripId);
+
+        // 2. Use findById instead of existsById for more detailed error reporting
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Cannot delete: Trip not found with ID: " + tripId));
+
+        // 3. Perform the delete
+        try {
+            tripRepository.delete(trip);
+            System.out.println("DEBUG: Trip " + tripId + " deleted successfully.");
+        } catch (Exception e) {
+            // This catches Foreign Key constraints (e.g., if bookings are linked)
+            throw new RuntimeException("Database error during deletion: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void addDestination(Long tripId, DestinationDto destDto) {
+        // Implementation logic for destinations
+    }
+
+    // ✅ REFINED MAPPING: Prevents NullPointerExceptions
+    private TripDto mapToDto(Trip trip) {
+        TripDto dto = new TripDto();
+        dto.setTripId(trip.getTripId());
+        dto.setTripName(trip.getTripName());
+        dto.setBudget(trip.getBudget());
+        dto.setStartDate(trip.getStartDate());
+        dto.setEndDate(trip.getEndDate());
+        dto.setTripStatus(trip.getTripStatus());
         
-        // 2. Delete it
-        tripRepo.delete(trip);
+        if (trip.getCustomer() != null) {
+            dto.setCustomerId(trip.getCustomer().getUserId());
+        }
+        
+        if (trip.getSelectedPackage() != null) {
+            dto.setPackageName(trip.getSelectedPackage().getPackageName());
+        } else {
+            dto.setPackageName("Custom Trip");
+        }
+        return dto;
     }
 }

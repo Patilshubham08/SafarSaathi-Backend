@@ -11,12 +11,13 @@ import com.travel.services.PackageService;
 
 @RestController
 @RequestMapping("/api/packages")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://localhost:5173")
 public class PackageController {
 
     @Autowired
     private PackageService packageService;
 
+    // 1. Create Package
     @PostMapping("/{vendorId}")
     public ResponseEntity<?> createPackage(@RequestBody Packages pkg, @PathVariable Long vendorId) {
         try {
@@ -27,8 +28,21 @@ public class PackageController {
         }
     }
 
+    // 2. Get All Packages
     @GetMapping
     public List<PackageDto> getAllPackages() {
         return packageService.getAllPackages();
+    }
+
+    // 👇 3. DELETE PACKAGE (ADD THIS)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletePackage(@PathVariable Long id) {
+        try {
+            packageService.deletePackage(id);
+            return ResponseEntity.ok("Package deleted successfully");
+        } catch (RuntimeException e) {
+            // This returns the "Package not found" message from your ServiceImpl
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

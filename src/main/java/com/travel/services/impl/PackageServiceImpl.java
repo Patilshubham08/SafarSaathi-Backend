@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.travel.dtos.PackageDto;
 import com.travel.entities.Packages;
 import com.travel.entities.User;
+import com.travel.entities.UserRole;
 import com.travel.repositories.PackagesRepository;
 import com.travel.repositories.UserRepository;
 import com.travel.services.PackageService;
@@ -39,20 +40,36 @@ public class PackageServiceImpl implements PackageService {
 
     @Override
     public PackageDto createPackage(Packages pkg, Long vendorId) {
+
         User vendor = userRepo.findById(vendorId)
                 .orElseThrow(() -> new RuntimeException("Vendor not found"));
-        
+
+        if (vendor.getUserRole() != UserRole.VENDOR) {
+            throw new RuntimeException("Only vendors can create packages");
+        }
+
         pkg.setVendor(vendor);
         Packages savedPkg = packageRepo.save(pkg);
-        
-        return mapToDto(savedPkg); // Return DTO
+
+        return mapToDto(savedPkg);
     }
+
 
     @Override
     public List<PackageDto> getAllPackages() {
         return packageRepo.findAll()
                 .stream()
-                .map(this::mapToDto) // Convert list to DTOs
+                .map(this::mapToDto)
                 .collect(Collectors.toList());
+    }
+
+    // 👇 ADD THIS METHOD TO FIX THE DELETE ISSUE
+    @Override
+    public void deletePackage(Long id) {
+        if (packageRepo.existsById(id)) {
+            packageRepo.deleteById(id);
+        } else {
+            throw new RuntimeException("Package not found with id: " + id);
+        }
     }
 }

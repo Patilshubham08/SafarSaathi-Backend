@@ -21,6 +21,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
@@ -31,6 +32,7 @@ import lombok.ToString;
 @Setter
 @ToString
 @RequiredArgsConstructor
+
 public class Trip {
 	
 	@Id

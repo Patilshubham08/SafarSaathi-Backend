@@ -6,5 +6,9 @@ import java.util.List;
 
 public interface PackageService {
     PackageDto createPackage(Packages pkg, Long vendorId);
+    
     List<PackageDto> getAllPackages();
+    
+    // 👇 Add this so the Controller can call it
+    void deletePackage(Long id);
 }
