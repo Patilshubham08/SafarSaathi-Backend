@@ -7,34 +7,36 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/trips")
-@CrossOrigin(origins = "http://localhost:5173")
 public class TripController {
 
     @Autowired
     private TripService tripService;
 
-    // ✅ FIXED: Matches axios.post(`.../api/trips/${user.userId}?packageId=${pkg.packageId}`)
     @PostMapping("/{customerId}")
     public ResponseEntity<?> createTrip(
-            @PathVariable Long customerId, 
+            @PathVariable Long customerId,
             @RequestParam(required = false) Long packageId,
             @RequestBody Trip trip) {
         try {
             TripDto createdTrip = tripService.createTrip(trip, customerId, packageId);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdTrip);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
         }
     }
 
-    // ✅ FIXED: Matches axios.get(`.../api/trips/customer/${user.userId}`)
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<TripDto>> getTripsByCustomer(@PathVariable Long customerId) {
-        return ResponseEntity.ok(tripService.getTripsByCustomer(customerId));
+    public ResponseEntity<?> getTripsByCustomer(@PathVariable Long customerId) {
+        try {
+            return ResponseEntity.ok(tripService.getTripsByCustomer(customerId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error: " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")

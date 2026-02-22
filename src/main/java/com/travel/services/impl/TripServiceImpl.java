@@ -5,7 +5,8 @@ import com.travel.dtos.TripDto;
 import com.travel.entities.Trip;
 import com.travel.entities.User;
 import com.travel.entities.Packages;
-import com.travel.entities.TripStatus; // Ensure this is imported
+import com.travel.entities.BookingStatus;
+import com.travel.entities.TripStatus;
 import com.travel.repositories.TripRepository;
 import com.travel.repositories.UserRepository;
 import com.travel.repositories.PackagesRepository;
@@ -32,28 +33,25 @@ public class TripServiceImpl implements TripService {
 
     @Override
     public TripDto createTrip(Trip trip, Long customerId, Long packageId) {
-        // 1. Fetch Customer
         User user = userRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found with ID: " + customerId));
         trip.setCustomer(user);
 
-        // 2. Fetch and Link Package
         if (packageId != null) {
             Packages pkg = packagesRepository.findById(packageId)
                     .orElseThrow(() -> new RuntimeException("Package not found with ID: " + packageId));
             trip.setSelectedPackage(pkg);
-            
-            // Auto-fill trip info from the selected package if not already set
-            if (trip.getTripName() == null) trip.setTripName(pkg.getPackageName());
-            if (trip.getBudget() == null) trip.setBudget(pkg.getPrice());
+
+            if (trip.getTripName() == null)
+                trip.setTripName(pkg.getPackageName());
+            if (trip.getBudget() == null)
+                trip.setBudget(pkg.getPrice());
         }
 
-        // 3. Safety: Default Status if missing
         if (trip.getTripStatus() == null) {
             trip.setTripStatus(TripStatus.SCHEDULED);
         }
 
-        // 4. Basic Date Validation
         if (trip.getStartDate() != null && trip.getEndDate() != null) {
             if (trip.getEndDate().isBefore(trip.getStartDate())) {
                 throw new RuntimeException("End date cannot be before start date.");
@@ -83,41 +81,32 @@ public class TripServiceImpl implements TripService {
     public TripDto updateTrip(Long tripId, TripDto dto) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
-        
+
         trip.setTripName(dto.getTripName());
         trip.setBudget(dto.getBudget());
         trip.setTripStatus(dto.getTripStatus());
         trip.setStartDate(dto.getStartDate());
         trip.setEndDate(dto.getEndDate());
-        
+        trip.setPackageTier(dto.getPackageTier());
+
         return mapToDto(tripRepository.save(trip));
     }
 
     @Override
     public void deleteTrip(Long tripId) {
-        // 1. Log the incoming ID to identify 'undefined' or 'null' issues from frontend
-        System.out.println("DEBUG: Attempting to delete Trip with ID: " + tripId);
-
-        // 2. Use findById instead of existsById for more detailed error reporting
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Cannot delete: Trip not found with ID: " + tripId));
-
-        // 3. Perform the delete
         try {
             tripRepository.delete(trip);
-            System.out.println("DEBUG: Trip " + tripId + " deleted successfully.");
         } catch (Exception e) {
-            // This catches Foreign Key constraints (e.g., if bookings are linked)
             throw new RuntimeException("Database error during deletion: " + e.getMessage());
         }
     }
 
     @Override
     public void addDestination(Long tripId, DestinationDto destDto) {
-        // Implementation logic for destinations
     }
 
-    // ✅ REFINED MAPPING: Prevents NullPointerExceptions
     private TripDto mapToDto(Trip trip) {
         TripDto dto = new TripDto();
         dto.setTripId(trip.getTripId());
@@ -126,11 +115,20 @@ public class TripServiceImpl implements TripService {
         dto.setStartDate(trip.getStartDate());
         dto.setEndDate(trip.getEndDate());
         dto.setTripStatus(trip.getTripStatus());
-        
+        dto.setPackageTier(trip.getPackageTier());
+
+        boolean isPaid = (trip.getBooking() != null && trip.getBooking().getBookingsStatus() == BookingStatus.CONFIRMED)
+                || (trip.getTripStatus() == TripStatus.CONFIRMED);
+        dto.setPaid(isPaid);
+
+        if (trip.getBooking() != null) {
+            dto.setBookingId(trip.getBooking().getBookingId());
+        }
+
         if (trip.getCustomer() != null) {
             dto.setCustomerId(trip.getCustomer().getUserId());
         }
-        
+
         if (trip.getSelectedPackage() != null) {
             dto.setPackageName(trip.getSelectedPackage().getPackageName());
         } else {

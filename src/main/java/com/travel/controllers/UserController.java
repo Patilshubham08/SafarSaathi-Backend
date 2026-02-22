@@ -3,7 +3,7 @@ package com.travel.controllers;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*; // Includes DeleteMapping, PutMapping, PathVariable
+import org.springframework.web.bind.annotation.*;
 
 import com.travel.entities.User;
 import com.travel.dtos.LoginDto;
@@ -11,13 +11,11 @@ import com.travel.services.UserService;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
 
     @Autowired
     private UserService userService;
 
-    // 1. Register
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         try {
@@ -28,7 +26,6 @@ public class UserController {
         }
     }
 
-    // 2. Login
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDto loginDetails) {
         try {
@@ -38,14 +35,12 @@ public class UserController {
             return ResponseEntity.status(401).body(e.getMessage());
         }
     }
-    
-    // 3. Get All Users
+
     @GetMapping
     public List<User> getAllUsers() {
         return userService.getAllUsers();
     }
 
-    // 👇 4. UPDATE USER (New)
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User userUpdates) {
         try {
@@ -56,7 +51,6 @@ public class UserController {
         }
     }
 
-    // 👇 5. DELETE USER (New)
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         try {

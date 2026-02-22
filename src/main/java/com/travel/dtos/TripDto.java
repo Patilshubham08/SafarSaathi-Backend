@@ -2,6 +2,7 @@ package com.travel.dtos;
 
 import java.time.LocalDate;
 import com.travel.entities.TripStatus;
+import com.travel.entities.PackageTier;
 import lombok.Data;
 
 @Data
@@ -12,8 +13,10 @@ public class TripDto {
     private LocalDate endDate;
     private Double budget;
     private TripStatus tripStatus;
-    
-    // Instead of the full objects, we just store IDs or Names
+    private PackageTier packageTier;
+
     private Long customerId;
-    private String packageName; 
+    private String packageName;
+    private boolean paid;
+    private Long bookingId;
 }

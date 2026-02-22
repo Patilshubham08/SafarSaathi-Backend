@@ -5,24 +5,25 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name="bookings")
+@Table(name = "bookings")
 @Getter
 @Setter
 @ToString
-@RequiredArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 public class Bookings {
 
 	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long bookingId;
-	
-    // FIX: OneToOne mapping back to Trip
-    @OneToOne
-    @JoinColumn(name = "trip_id")
-    private Trip trip;
-	
+
+	@OneToOne
+	@JoinColumn(name = "trip_id")
+	private Trip trip;
+
 	private LocalDate bookingDate;
-	
+
 	@Enumerated(EnumType.STRING)
+	@Column(name = "bookings_status", length = 50)
 	private BookingStatus bookingsStatus;
 }

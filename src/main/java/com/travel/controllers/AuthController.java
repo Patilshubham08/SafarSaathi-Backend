@@ -2,16 +2,10 @@ package com.travel.controllers;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
 import com.travel.dtos.LoginDto;
 import com.travel.dtos.RegisterDto;
 import com.travel.entities.User;
@@ -20,8 +14,7 @@ import com.travel.services.UserService;
 import com.travel.utils.JwtUtils;
 
 @RestController
-@RequestMapping("/auth")
-@CrossOrigin(origins = "http://localhost:5173")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     @Autowired
@@ -30,16 +23,15 @@ public class AuthController {
     @Autowired
     private JwtUtils jwtUtils;
 
-    // ===================== LOGIN =====================
+    @Autowired
+    private com.travel.services.EmailService emailService;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
         try {
-            System.out.println("LOGIN REQUEST = " + loginDto);
+            User user = userService.loginUser(loginDto.getEmail(), loginDto.getPassword());
 
-            User user = userService.loginUser(
-                    loginDto.getEmail(),
-                    loginDto.getPassword()
-            );
+            emailService.sendLoginNotification(user);
 
             String role = user.getUserRole().name();
             String token = jwtUtils.generateToken(user.getEmail(), role);
@@ -51,53 +43,31 @@ public class AuthController {
             response.put("userId", user.getUserId());
             response.put("email", user.getEmail());
 
-            System.out.println("LOGIN SUCCESS FOR = " + user.getEmail());
             return ResponseEntity.ok(response);
-
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body("Invalid email or password");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
         }
     }
 
-    // ===================== REGISTER =====================
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterDto dto) {
+        try {
+            User user = new User();
+            user.setName(dto.getName());
+            user.setEmail(dto.getEmail());
+            user.setPassword(dto.getPassword());
+            String role = (dto.getUserRole() == null) ? "CUSTOMER" : dto.getUserRole();
+            user.setUserRole(UserRole.valueOf(role.toUpperCase()));
 
-        // 🔴 MOST IMPORTANT DEBUG LINE
-        System.out.println("RAW DTO OBJECT = " + dto);
+            User savedUser = userService.registerUser(user);
 
-        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
-            return ResponseEntity.badRequest().body("Email is required");
+            emailService.sendWelcomeEmail(savedUser);
+
+            return ResponseEntity.ok("User registered successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("message", e.getMessage() != null ? e.getMessage() : "Unknown error during registration"));
         }
-
-        if (dto.getPassword() == null || dto.getPassword().isBlank()) {
-            return ResponseEntity.badRequest().body("Password is required");
-        }
-
-        if (dto.getName() == null || dto.getName().isBlank()) {
-            return ResponseEntity.badRequest().body("Name is required");
-        }
-
-        User user = new User();
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        user.setPassword(dto.getPassword());
-
-        // Default role = CUSTOMER
-        String role = dto.getUserRole();
-        if (role == null || role.isBlank()) {
-            role = "CUSTOMER";
-        }
-
-        user.setUserRole(UserRole.valueOf(role.toUpperCase()));
-
-        userService.registerUser(user);
-
-        System.out.println("USER REGISTERED = " + user.getEmail());
-
-        return ResponseEntity.ok("User registered successfully");
     }
 }

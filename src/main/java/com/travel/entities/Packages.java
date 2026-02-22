@@ -5,42 +5,42 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name="packages")
-@RequiredArgsConstructor
+@Table(name = "packages")
+@NoArgsConstructor
 @Getter
 @Setter
-@ToString(exclude = "trips") // Good practice to exclude lists from ToString to avoid recursion
+@ToString(exclude = "trips")
 public class Packages {
-	
-	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private Long packageId;
-	
-	private String packageName;
-	private Double price;
-	
-	@Column(length = 2000)
-	private String description;
-	
-	@Column(name = "image_url", length = 2000)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long packageId;
+
+    private String packageName;
+    private Double price;
+
+    @Column(length = 2000)
+    private String description;
+
+    @Column(name = "image_url", length = 2000)
     private String imageUrl;
-	
-	@ManyToOne
+
+    @Column(length = 2000)
+    private String highlights;
+
+    private String restaurants;
+
+    @ManyToOne
     @JoinColumn(name = "vendor_id")
-    @JsonIgnore 
+    @JsonIgnore
     private User vendor;
 
-    // --- UPDATED RELATIONSHIP ---
-    @OneToMany(
-        mappedBy = "selectedPackage", 
-        cascade = CascadeType.ALL, // 👈 Fixes the MySQL Error 1451
-        orphanRemoval = true       // 👈 Cleans up trips that no longer have a package
-    )
-    @JsonIgnore 
+    @OneToMany(mappedBy = "selectedPackage", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Trip> trips = new ArrayList<>();
 }

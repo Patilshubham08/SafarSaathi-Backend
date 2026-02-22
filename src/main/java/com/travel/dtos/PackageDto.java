@@ -9,8 +9,8 @@ public class PackageDto {
     private String description;
     private Double price;
     private String imageUrl;
-    
-    // Instead of the full 'User' object, we just send the ID and Name
     private Long vendorId;
     private String vendorName;
+    private String highlights;
+    private String restaurants;
 }

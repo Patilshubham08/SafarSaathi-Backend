@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-// 1. IMPORT THIS
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
@@ -22,56 +21,55 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name="trip")
+@Table(name = "trip")
 @Getter
 @Setter
-@ToString
-@RequiredArgsConstructor
+@ToString(exclude = { "customer", "selectedPackage", "booking", "transportations", "accommodations", "destinations" })
+@NoArgsConstructor
 
 public class Trip {
-	
-	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private Long tripId;
-	
-	private String tripName;
-	private LocalDate startDate;
-	private LocalDate endDate;
-	private Double budget;
-	
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private TripStatus tripStatus;
-	
-	@ManyToOne
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long tripId;
+
+    private String tripName;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private Double budget;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "trip_status", length = 50)
+    private TripStatus tripStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "package_tier", length = 50)
+    private PackageTier packageTier;
+
+    @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
     private User customer;
 
     @ManyToOne
     @JoinColumn(name = "package_id", nullable = true)
     private Packages selectedPackage;
-    
-    // 👇 SAFETY FIX 1: Add @JsonIgnore
+
     @OneToOne(mappedBy = "trip", cascade = CascadeType.ALL)
     @JsonIgnore
     private Bookings booking;
 
-    // 👇 SAFETY FIX 2: Add @JsonIgnore
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Transportation> transportations = new ArrayList<>();
 
-    // 👇 SAFETY FIX 3: Add @JsonIgnore
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Accommodation> accommodations = new ArrayList<>();
 
-    // 👇 SAFETY FIX 4: Add @JsonIgnore
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Destinations> destinations = new ArrayList<>();

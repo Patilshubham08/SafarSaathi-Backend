@@ -18,11 +18,10 @@ public class PackageServiceImpl implements PackageService {
 
     @Autowired
     private PackagesRepository packageRepo;
-    
+
     @Autowired
     private UserRepository userRepo;
 
-    // --- Helper: Convert Entity to DTO ---
     private PackageDto mapToDto(Packages pkg) {
         PackageDto dto = new PackageDto();
         dto.setPackageId(pkg.getPackageId());
@@ -30,7 +29,9 @@ public class PackageServiceImpl implements PackageService {
         dto.setDescription(pkg.getDescription());
         dto.setPrice(pkg.getPrice());
         dto.setImageUrl(pkg.getImageUrl());
-        
+        dto.setHighlights(pkg.getHighlights());
+        dto.setRestaurants(pkg.getRestaurants());
+
         if (pkg.getVendor() != null) {
             dto.setVendorId(pkg.getVendor().getUserId());
             dto.setVendorName(pkg.getVendor().getName());
@@ -42,10 +43,11 @@ public class PackageServiceImpl implements PackageService {
     public PackageDto createPackage(Packages pkg, Long vendorId) {
 
         User vendor = userRepo.findById(vendorId)
-                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+                .orElseThrow(() -> new RuntimeException("Vendor not found with ID: " + vendorId));
 
         if (vendor.getUserRole() != UserRole.VENDOR) {
-            throw new RuntimeException("Only vendors can create packages");
+            throw new RuntimeException("Access Denied: Only users with VENDOR role can create packages. Current role: "
+                    + vendor.getUserRole());
         }
 
         pkg.setVendor(vendor);
@@ -53,7 +55,6 @@ public class PackageServiceImpl implements PackageService {
 
         return mapToDto(savedPkg);
     }
-
 
     @Override
     public List<PackageDto> getAllPackages() {
@@ -63,7 +64,6 @@ public class PackageServiceImpl implements PackageService {
                 .collect(Collectors.toList());
     }
 
-    // 👇 ADD THIS METHOD TO FIX THE DELETE ISSUE
     @Override
     public void deletePackage(Long id) {
         if (packageRepo.existsById(id)) {
@@ -71,5 +71,20 @@ public class PackageServiceImpl implements PackageService {
         } else {
             throw new RuntimeException("Package not found with id: " + id);
         }
+    }
+
+    @Override
+    public PackageDto getPackageById(Long id) {
+        Packages pkg = packageRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Package not found"));
+        return mapToDto(pkg);
+    }
+
+    @Override
+    public List<PackageDto> searchPackages(String query) {
+        return packageRepo.findByPackageNameContainingIgnoreCase(query)
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 }
