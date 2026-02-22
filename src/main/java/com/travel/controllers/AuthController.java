@@ -44,8 +44,7 @@ public class AuthController {
             response.put("email", user.getEmail());
 
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
-        } catch (Exception e) {
+        } catch (Exception e)  {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
         }
     }
